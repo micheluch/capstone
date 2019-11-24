@@ -1,9 +1,8 @@
-import argparse, socket, logging, threading, concurrent.futures
-
-# Some constants for easier testing
-MAX_CLIENT_THREADS = 3
+import argparse, socket, logging, concurrent.futures
 
 # Comment out the line below to not print the INFO messages
+import executor as executor
+
 logging.basicConfig(level=logging.INFO)
 
 def recvall(sock, length):
@@ -16,24 +15,104 @@ def recvall(sock, length):
         data += more
     return data
 
-def client(host,port):
+
+def client(host ,port):
     # connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host,port))
+    sock.connect((host ,port))
     logging.info('Connect to server: ' + host + ' on port: ' + str(port))
 
     # exchange messages
     sock.sendall(b'100 HELO')
     logging.info('Sent: 100 HELO')
-    message = recvall(sock, 6).decode('utf-8') 
+    message = recvall(sock, 6).decode('utf-8')
     logging.info('Received: ' + message)
     if message.startswith('200'):
         logging.info('This is a good thing.')
     else:
         logging.info('We sent a bad request.')
 
-    # new code goes here
+    # REGISTRATION
+    message = recvall(sock, 3).decode('utf-8')
+    logging.info('Received: ' + message)
+    if message.startswith('120'):
+        playerRole = 'X'
+        gameTurn = 'X'
+        logging.info('Role is ' + playerRole)
+    elif message.startswith('130'):
+        playerRole = 'O'
+        gameTurn = 'X'
+        logging.info('Role is ' + playerRole)
+    else:
+        logging.info('Received error: ' + message)
+        playerRole = ''
 
+    # GAME PLAY
+    # If 300 is sent: the game starts
+    message = recvall(sock, 3).decode('utf-8')
+    if message.startswith('300'):
+        logging.info('Recieved: 300')
+        messageLength = 21
+        # Get next message
+        message = recvall(sock, messageLength).decode('utf-8')
+        logging.info(playerRole + ' Received: ' + message)
+        # Loop the current session until server has errors or game ends normally
+        while playerRole != '' and not (message.startswith('600')) and not (message.startswith('611')) and not (message.startswith('621')):
+            # Case for accepted moves
+            if message.startswith('320') or message.startswith('340'):
+                messageLength = 21
+                logging.info('Player ' + playerRole + " has moved, rejoice")
+            # Case for specific player to move (X or O)
+            elif (message.startswith('310') and playerRole is 'X') or (message.startswith('330') and playerRole is 'O'):
+                messageLength = 5
+                boardState = (message.split()[1]).split(',')
+                attemptedMove = makeMove(boardState)
+                send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
+                sock.sendall(send_msg)
+                logging.info('Sent: 100 ' + str(attemptedMove))
+            # Case for player not making a valid move on their turn
+            elif (message.startswith('312') and playerRole is 'X') or (message.startswith('332') and playerRole is 'O'):
+                messageLength = 5
+                boardState = (message.split()[1]).split(',')
+                attemptedMove = makeMove(boardState)
+                send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
+                sock.sendall(send_msg)
+                logging.info('Sent: 100 ' + str(attemptedMove))
+            # Case for any invalid move a player did
+            elif message.startswith('311') or message.startswith('312') or message.startswith('313'):
+                logging.error(playerRole + " made an invalid move")
+                attemptedMove = makeMove(boardState)
+                send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
+                sock.sendall(send_msg)
+                logging.info('Sent: 100 ' + str(attemptedMove))
+            # Case for a player moving out of turn
+            elif message.startswith('314'):
+                logging.info('Not ' + playerRole + "'s turn")
+                messageLength = 21
+            else:
+                pass
+            # Receive the response message
+            message = recvall(sock, messageLength).decode('utf-8')
+            logging.info(playerRole + ' Received: ' + message)
+
+
+    # END OF GAME
+    # If 600, game ended well
+    if message.startswith('600'):
+        message = recvall(sock, 3).decode('utf-8')
+        if message.startswith('610'):
+            logging.info('X won the game!')
+        if message.startswith('620'):
+            logging.info('O won the game!')
+        if message.startswith('630'):
+            logging.info('There was a tie!')
+
+    # Quit
+    sock.close()
+
+# Function to let a player make the move
+def makeMove(boardState):
+    return input("Enter your move (0-8): ")
 
 if __name__ == '__main__':
     port = 9001
@@ -42,6 +121,6 @@ if __name__ == '__main__':
     parser.add_argument('host', help='IP address of the server.')
     args = parser.parse_args()
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_CLIENT_THREADS) as executor:
-        for i in range(MAX_CLIENT_THREADS):
+    with concurrent.futures.ThreadPoolExecutor(max_workers = 2) as executor:
+        for i in range(2):
             executor.submit(client, args.host, port)
