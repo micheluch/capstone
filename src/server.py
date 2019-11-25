@@ -1,18 +1,15 @@
 import argparse, socket, logging, threading
-from engine import TicTacToeEngine
 
 # Comment out the line below to not print the INFO messages
 logging.basicConfig(level=logging.INFO)
 
 class ClientThread(threading.Thread):
-    assignedX = False
-    assignedO = False
-    game = TicTacToeEngine()
-    eventX = threading.Event()
-    eventO = threading.Event()
-    roleLock = threading.Lock()
-    engineLock = threading.Lock()
 
+    lightToChange = threading.Lock()
+    changeMutex = threading.Lock()
+    roleLock = threading.Lock()
+    Nstate, Estate, Sstate, Wstate = False
+    changeLight = False
 
     def __init__(self, address, socket):
         threading.Thread.__init__(self)
@@ -23,29 +20,35 @@ class ClientThread(threading.Thread):
         # exchange messages
         message = self.recvall(8)
         msg = message.decode('utf-8')
-        logging.info('Recieved a message from client: ' + msg)
+        logging.info('Received a message from client: ' + msg)
 
         if msg.startswith('100'):
             self.csock.sendall(b'200 OK')
-            logging.info('Recieved HELO ok from client.')
+            logging.info('Received HELO ok from client.')
         else:
             self.csock.sendall(b'500 BAD REQUEST')
             logging.warning('Bad request from client.')
 
-        # Pre-game
-        # Assign roles to players
-        global XisTaken, OisTaken
+        # Pre-connection
+        # Assign traffic light
+        global NisTaken, EisTaken, SisTaken, WisTaken
         with ClientThread.roleLock:
-            if XisTaken:
-                self.role = 'O'
-                OisTaken = True
-                ClientThread.eventO.clear()
-                self.csock.sendall(b'130')
-            elif not OisTaken:
-                self.role = 'X'
-                XisTaken = True
-                ClientThread.eventX.clear()
+            if not NisTaken:
+                self.role = 'N'
+                NisTaken = True
+                self.csock.sendall(b'110')
+            elif not EisTaken:
+                self.role = 'E'
+                EisTaken = True
                 self.csock.sendall(b'120')
+            elif not SisTaken:
+                self.role = 'S'
+                SisTaken = True
+                self.csock.sendall(b'130')
+            elif not WisTaken:
+                self.role = 'W'
+                WisTaken = True
+                self.csock.sendall(b'140')
             else: #In case there is a third player trying to connect
                 self.csock.sendall(b'113')
 
@@ -54,8 +57,31 @@ class ClientThread(threading.Thread):
         message = '300'.encode('utf-8')
         self.csock.sendall(message)
         logging.info('Sent: 300')
-        ClientThread.game.display_board()
-        # Main loop of the game
+        # Main loop of the traffic light system
+        while True:
+            if ClientThread.changeLight is True:
+                with ClientThread.lightToChange:
+                    if self.role is 'N':
+                        ClientThread.Nstate = True
+                    elif self.role is 'E':
+                        ClientThread.Estate = True
+                    elif self.role is 'S':
+                        ClientThread.Sstate = True
+                    elif self.role is 'W':
+                        ClientThread.Wstate = True
+            else:
+                message = self.recvall(7).decode('utf-8')
+                if message.startswith("200"):
+                    with ClientThread.changeMutex:
+                        if ClientThread.changeLight is False:
+                            ClientThread.changeLight = True
+
+
+
+
+
+
+
         while self.role != '' and ClientThread.game.is_game_over() == '-':
             # XOR for X and O clients, so the game doesn't deadlock
             if (self.role is 'X' and ClientThread.game.x_turn is True) or not (

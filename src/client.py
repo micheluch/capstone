@@ -35,17 +35,21 @@ def client(host ,port):
     # REGISTRATION
     message = recvall(sock, 3).decode('utf-8')
     logging.info('Received: ' + message)
-    if message.startswith('120'):
-        playerRole = 'X'
-        gameTurn = 'X'
-        logging.info('Role is ' + playerRole)
+    if message.startswith('110'):
+        clientRole = 'N'
+        logging.info('Role is ' + clientRole)
+    elif message.startswith('120'):
+        clientRole = 'E'
+        logging.info('Role is ' + clientRole)
     elif message.startswith('130'):
-        playerRole = 'O'
-        gameTurn = 'X'
-        logging.info('Role is ' + playerRole)
+        clientRole = 'S'
+        logging.info('Role is ' + clientRole)
+    elif message.startswith('140'):
+        clientRole = 'W'
+        logging.info('Role is ' + clientRole)
     else:
         logging.info('Received error: ' + message)
-        playerRole = ''
+        clientRole = ''
 
     # GAME PLAY
     # If 300 is sent: the game starts
@@ -55,15 +59,15 @@ def client(host ,port):
         messageLength = 21
         # Get next message
         message = recvall(sock, messageLength).decode('utf-8')
-        logging.info(playerRole + ' Received: ' + message)
+        logging.info(clientRole + ' Received: ' + message)
         # Loop the current session until server has errors or game ends normally
-        while playerRole != '' and not (message.startswith('600')) and not (message.startswith('611')) and not (message.startswith('621')):
+        while clientRole != '' and not (message.startswith('600')) and not (message.startswith('611')) and not (message.startswith('621')):
             # Case for accepted moves
             if message.startswith('320') or message.startswith('340'):
                 messageLength = 21
-                logging.info('Player ' + playerRole + " has moved, rejoice")
+                logging.info('Player ' + clientRole + " has moved, rejoice")
             # Case for specific player to move (X or O)
-            elif (message.startswith('310') and playerRole is 'X') or (message.startswith('330') and playerRole is 'O'):
+            elif (message.startswith('310') and clientRole is 'X') or (message.startswith('330') and clientRole is 'O'):
                 messageLength = 5
                 boardState = (message.split()[1]).split(',')
                 attemptedMove = makeMove(boardState)
@@ -71,7 +75,7 @@ def client(host ,port):
                 sock.sendall(send_msg)
                 logging.info('Sent: 100 ' + str(attemptedMove))
             # Case for player not making a valid move on their turn
-            elif (message.startswith('312') and playerRole is 'X') or (message.startswith('332') and playerRole is 'O'):
+            elif (message.startswith('312') and clientRole is 'X') or (message.startswith('332') and clientRole is 'O'):
                 messageLength = 5
                 boardState = (message.split()[1]).split(',')
                 attemptedMove = makeMove(boardState)
@@ -80,20 +84,20 @@ def client(host ,port):
                 logging.info('Sent: 100 ' + str(attemptedMove))
             # Case for any invalid move a player did
             elif message.startswith('311') or message.startswith('312') or message.startswith('313'):
-                logging.error(playerRole + " made an invalid move")
+                logging.error(clientRole + " made an invalid move")
                 attemptedMove = makeMove(boardState)
                 send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
                 sock.sendall(send_msg)
                 logging.info('Sent: 100 ' + str(attemptedMove))
             # Case for a player moving out of turn
             elif message.startswith('314'):
-                logging.info('Not ' + playerRole + "'s turn")
+                logging.info('Not ' + clientRole + "'s turn")
                 messageLength = 21
             else:
                 pass
             # Receive the response message
             message = recvall(sock, messageLength).decode('utf-8')
-            logging.info(playerRole + ' Received: ' + message)
+            logging.info(clientRole + ' Received: ' + message)
 
 
     # END OF GAME
@@ -121,6 +125,6 @@ if __name__ == '__main__':
     parser.add_argument('host', help='IP address of the server.')
     args = parser.parse_args()
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers = 2) as executor:
-        for i in range(2):
+    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+        for i in range(4):
             executor.submit(client, args.host, port)
