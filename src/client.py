@@ -1,14 +1,9 @@
 import argparse, socket, logging, concurrent.futures, sys, time
 
-#import concurrent.futures.Executor as executor
-
 # Comment out the line below to not print the INFO messages
 logging.basicConfig(level=logging.INFO)
 
-#########
-# Globals
-#########
-RED_DURATION = 10
+RED_DURATION = 10 #Variable to control the timer for red lights (in seconds)
 
 def recvall(sock, length):
     data = b''
@@ -34,7 +29,7 @@ def client(host ,port):
     message = recvall(sock, 6).decode('utf-8')
     logging.info('Received: ' + message)
     if message.startswith('200'):
-        logging.info('This is a good thing.')
+        logging.info('All OK')
     else:
         logging.info('We sent a bad request.')
 
@@ -86,28 +81,10 @@ def client(host ,port):
                 sys.exit(-1)
 
 
-
-        
-
-    # END OF GAME
-    # If 600, game ended well
-    if message.startswith('600'):
-        message = recvall(sock, 3).decode('utf-8')
-        if message.startswith('610'):
-            logging.info('X won the game!')
-        if message.startswith('620'):
-            logging.info('O won the game!')
-        if message.startswith('630'):
-            logging.info('There was a tie!')
-
-    # Quit
-    sock.close()
-
-
 if __name__ == '__main__':
     port = 9001
 
-    parser = argparse.ArgumentParser(description='Tic Tac Oh No Client (TCP edition)')
+    parser = argparse.ArgumentParser(description='Basic Traffic Light Simulator')
     parser.add_argument('host', help='IP address of the server.')
     args = parser.parse_args()
 
