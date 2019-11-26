@@ -1,9 +1,14 @@
-import argparse, socket, logging, concurrent.futures
+import argparse, socket, logging, concurrent.futures, sys, time
+
+#import concurrent.futures.Executor as executor
 
 # Comment out the line below to not print the INFO messages
-import executor as executor
-
 logging.basicConfig(level=logging.INFO)
+
+#########
+# Globals
+#########
+RED_DURATION = 10
 
 def recvall(sock, length):
     data = b''
@@ -20,6 +25,7 @@ def client(host ,port):
     # connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host ,port))
+    isGreen = False
     logging.info('Connect to server: ' + host + ' on port: ' + str(port))
 
     # exchange messages
@@ -37,12 +43,14 @@ def client(host ,port):
     logging.info('Received: ' + message)
     if message.startswith('110'):
         clientRole = 'N'
+        isGreen = True
         logging.info('Role is ' + clientRole)
     elif message.startswith('120'):
         clientRole = 'E'
         logging.info('Role is ' + clientRole)
     elif message.startswith('130'):
         clientRole = 'S'
+        isGreen = True
         logging.info('Role is ' + clientRole)
     elif message.startswith('140'):
         clientRole = 'W'
@@ -51,54 +59,35 @@ def client(host ,port):
         logging.info('Received error: ' + message)
         clientRole = ''
 
-    # GAME PLAY
-    # If 300 is sent: the game starts
     message = recvall(sock, 3).decode('utf-8')
-    if message.startswith('300'):
-        logging.info('Recieved: 300')
-        messageLength = 21
-        # Get next message
-        message = recvall(sock, messageLength).decode('utf-8')
-        logging.info(clientRole + ' Received: ' + message)
-        # Loop the current session until server has errors or game ends normally
-        while clientRole != '' and not (message.startswith('600')) and not (message.startswith('611')) and not (message.startswith('621')):
-            # Case for accepted moves
-            if message.startswith('320') or message.startswith('340'):
-                messageLength = 21
-                logging.info('Player ' + clientRole + " has moved, rejoice")
-            # Case for specific player to move (X or O)
-            elif (message.startswith('310') and clientRole is 'X') or (message.startswith('330') and clientRole is 'O'):
-                messageLength = 5
-                boardState = (message.split()[1]).split(',')
-                attemptedMove = makeMove(boardState)
-                send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
-                sock.sendall(send_msg)
-                logging.info('Sent: 100 ' + str(attemptedMove))
-            # Case for player not making a valid move on their turn
-            elif (message.startswith('312') and clientRole is 'X') or (message.startswith('332') and clientRole is 'O'):
-                messageLength = 5
-                boardState = (message.split()[1]).split(',')
-                attemptedMove = makeMove(boardState)
-                send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
-                sock.sendall(send_msg)
-                logging.info('Sent: 100 ' + str(attemptedMove))
-            # Case for any invalid move a player did
-            elif message.startswith('311') or message.startswith('312') or message.startswith('313'):
-                logging.error(clientRole + " made an invalid move")
-                attemptedMove = makeMove(boardState)
-                send_msg = ('100 ' + str(attemptedMove)).encode('utf-8')
-                sock.sendall(send_msg)
-                logging.info('Sent: 100 ' + str(attemptedMove))
-            # Case for a player moving out of turn
-            elif message.startswith('314'):
-                logging.info('Not ' + clientRole + "'s turn")
-                messageLength = 21
-            else:
-                pass
-            # Receive the response message
-            message = recvall(sock, messageLength).decode('utf-8')
-            logging.info(clientRole + ' Received: ' + message)
+    logging.info(clientRole + ' Received: ' + message)
 
+    while True:
+        if isGreen:
+            message = recvall(sock, 7).decode('utf-8')
+            logging.info(clientRole + ' Received: ' + message)
+            if message.startswith("400"):
+                isGreen = False
+                sendMessage = ("100 " + clientRole + " R").encode('utf-8')
+                sock.sendall(sendMessage)
+                logging.info(clientRole + ' Sent:' + sendMessage.decode('utf-8'))
+            else:
+                sys.exit(-1)
+        else: # light is Red
+            time.sleep(RED_DURATION)
+            sendMessage = ("200 " + clientRole + " G").encode('utf-8')
+            sock.sendall(sendMessage)
+            logging.info(clientRole + ' Sent: ' + sendMessage.decode('utf-8'))
+            message = recvall(sock, 7).decode('utf-8')
+            logging.info(clientRole + ' Received: ' + message)
+            if message.startswith("300"):
+                isGreen = True
+            else:
+                sys.exit(-1)
+
+
+
+        
 
     # END OF GAME
     # If 600, game ended well

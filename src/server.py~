@@ -146,7 +146,7 @@ class ClientThread(threading.Thread):
                 message = ("300 " + self.role + " G").encode('utf-8')
                 self.csock.sendall(message)
                 logging.info('Sent to ' + self.role + ': 300 ' + self.role + ' G')
-                self.isGreen = True
+                isGreen = True
 
 
 
