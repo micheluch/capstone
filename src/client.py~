@@ -114,6 +114,9 @@ def client(host ,port):
     # Quit
     sock.close()
 
+# Function to let a player make the move
+def makeMove(boardState):
+    return input("Enter your move (0-8): ")
 
 if __name__ == '__main__':
     port = 9001
