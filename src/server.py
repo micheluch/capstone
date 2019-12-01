@@ -116,13 +116,13 @@ class ClientThread(threading.Thread):
                     #set WChangeEvent
                     ClientThread.WChangeEvent.set()
                 #wait on NChangeEvent
-                ClientThread.NChangeEvent.wait()
+                ClientThread.NChangeEvent.wait(5)
                 #wait on SChangeEvent
-                ClientThread.SChangeEvent.wait()
+                ClientThread.SChangeEvent.wait(5)
                 #wait on EChangeEvent
-                ClientThread.EChangeEvent.wait()
+                ClientThread.EChangeEvent.wait(5)
                 #wait on WChangeEvent
-                ClientThread.WChangeEvent.wait()
+                ClientThread.WChangeEvent.wait(5)
                 #clear all events
 
                 time.sleep(1) #Removing the sleep desynchronizes the system. Potential break for machine learning alrgorithm to catch
