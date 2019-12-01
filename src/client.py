@@ -22,14 +22,14 @@ def client(host, port, isAttacker, mode):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host ,port))
     isGreen = False
-    turnRedMsg = 100
-    turnGreenMsg = 200
+    turnRedMsg = "100"
+    turnGreenMsg = "200"
     patienceValue = 1
     if (isAttacker):
         if mode == 1:
             patienceValue = 0
-        turnRedMsg = 105
-        turnGreenMsg = 205
+        turnRedMsg = "105"
+        turnGreenMsg = "205"
     logging.info('Connect to server: ' + host + ' on port: ' + str(port))
 
     # exchange messages
@@ -95,14 +95,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Basic Traffic Light Simulator')
     parser.add_argument('host', help='IP address of the server.')
-    parser.add_argument('mode', help='Client attack mode. Enter 0 for normal operation.')
+    parser.add_argument('mode', type=int, help='Client attack mode. Enter 0 for normal operation.')
     args = parser.parse_args()
-    if args.mode != 0:
-        attacker = random.randint(1, 4)
+    attacker = 4
+    if args.mode > 0:
+        attacker = random.randint(0, 3)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         for i in range(4):
-            if i is attacker:
+            if i == attacker:
                 isAttacker = True
             else:
                 isAttacker = False

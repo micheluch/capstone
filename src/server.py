@@ -84,6 +84,7 @@ class ClientThread(threading.Thread):
                 self.csock.sendall(message)
                 logging.info('Sent to ' + self.role + ': 400 ' + self.role + ' R')
                 message = self.recvall(7).decode('utf-8')
+                logging.info('Received from ' + self.role + ': ' + message)
                 self.isGreen = False
                 
                 if self.role is 'N':
@@ -101,6 +102,7 @@ class ClientThread(threading.Thread):
  
             else:
                 message = self.recvall(7).decode('utf-8')
+                logging.info('Received from ' + self.role + ': ' + message)
                 if self.role is 'N':
                     #set NChangeEvent
                     ClientThread.NChangeEvent.set()
