@@ -66,7 +66,7 @@ class ClientThread(threading.Thread):
                 self.csock.sendall(b'105')
 
         # Game on
-        # Send 300: game start trigger
+        # Send 900: game start trigger
         message = '900'.encode('utf-8')
         self.csock.sendall(message)
         logging.info('Sent: 900')
