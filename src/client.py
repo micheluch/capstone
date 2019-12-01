@@ -1,4 +1,5 @@
 import argparse, socket, logging, concurrent.futures, sys, time
+import random
 
 # Comment out the line below to not print the INFO messages
 logging.basicConfig(level=logging.INFO)
@@ -16,11 +17,19 @@ def recvall(sock, length):
     return data
 
 
-def client(host ,port):
+def client(host, port, isAttacker, mode):
     # connect
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host ,port))
     isGreen = False
+    turnRedMsg = 100
+    turnGreenMsg = 200
+    patienceValue = 1
+    if (isAttacker):
+        if mode == 1:
+            patienceValue = 0
+        turnRedMsg = 105
+        turnGreenMsg = 205
     logging.info('Connect to server: ' + host + ' on port: ' + str(port))
 
     # exchange messages
@@ -63,14 +72,14 @@ def client(host ,port):
             logging.info(clientRole + ' Received: ' + message)
             if message.startswith("400"):
                 isGreen = False
-                sendMessage = ("100 " + clientRole + " R").encode('utf-8')
+                sendMessage = (turnRedMsg + " " + clientRole + " R").encode('utf-8')
                 sock.sendall(sendMessage)
                 logging.info(clientRole + ' Sent:' + sendMessage.decode('utf-8'))
             else:
                 sys.exit(-1)
         else: # light is Red
-            time.sleep(RED_DURATION)
-            sendMessage = ("200 " + clientRole + " G").encode('utf-8')
+            time.sleep(RED_DURATION * patienceValue)
+            sendMessage = (turnGreenMsg + " " + clientRole + " G").encode('utf-8')
             sock.sendall(sendMessage)
             logging.info(clientRole + ' Sent: ' + sendMessage.decode('utf-8'))
             message = recvall(sock, 7).decode('utf-8')
@@ -86,8 +95,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Basic Traffic Light Simulator')
     parser.add_argument('host', help='IP address of the server.')
+    parser.add_argument('mode', help='Client attack mode. Enter 0 for normal operation.')
     args = parser.parse_args()
+    if args.mode != 0:
+        attacker = random.randint(1, 4)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         for i in range(4):
-            executor.submit(client, args.host, port)
+            if i is attacker:
+                isAttacker = True
+            else:
+                isAttacker = False
+            executor.submit(client, args.host, port, isAttacker, args.mode)
