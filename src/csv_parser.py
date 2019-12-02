@@ -27,3 +27,4 @@ with open(csv_file_path + "PROCESSED " + csv_name, mode="w") as output_csv:
                 output_file.writerow(tempRow + [1])
             else:
                 output_file.writerow(tempRow + [0])
+
