@@ -63,8 +63,24 @@ class ClientThread(threading.Thread):
                 self.role = 'W'
                 ClientThread.WisTaken = True
                 self.csock.sendall(b'140')
-            else: #Should never happen in normal run
+            else:
+                # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
+                working = True
+                while working:
+                    message = self.recvall(3).decode('utf-8')
+                    if message.startswith("700"):
+                        message = self.recvall(15).decode('utf-8')
+                        NChangeEvent.set()
+                        SChangeEvent.set()
+                        EChangeEvent.set()
+                        WChangeEvent.set()
+                        working = False
+                    else:
+                        message = self.recvall(9).decode('utf-8')
+                    logging.info("Sentinel sent " + message)
+                sock.close()
+                sys.exit()
 
         # Game on
         # Send 300: game start trigger
@@ -84,7 +100,13 @@ class ClientThread(threading.Thread):
                 message = ("400 " + self.role + " R").encode('utf-8')
                 self.csock.sendall(message)
                 logging.info('Sent to ' + self.role + ': 400 ' + self.role + ' R')
-                message = self.recvall(7).decode('utf-8')
+                message = self.recvall(3).decode('utf-8')
+                if message.startswith('700'):
+                    message += self.recvall(15).decode('utf-8')
+                    logging.error('Received fatal error from ' + self.role + ': ' + message)
+                    break
+                else:
+                    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
                 self.isGreen = False
                 
@@ -102,7 +124,12 @@ class ClientThread(threading.Thread):
                     ClientThread.WChangeEvent.set()
  
             else:
-                message = self.recvall(7).decode('utf-8')
+                message = self.recvall(3).decode('utf-8')
+                if message.startswith('700'):
+                    message += self.recvall(15).decode('utf-8')
+                    logging.error('Received fatal error from ' + self.role + ': ' + message)
+                else:
+                    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
                 if self.role is 'N':
                     #set NChangeEvent
@@ -143,6 +170,16 @@ class ClientThread(threading.Thread):
         data = b''
         while len(data) < length:
             more = self.csock.recv(length - len(data))
+            if not more:
+                logging.error('Did not receive all the expected bytes from server.')
+                break
+            data += more
+        return data
+
+    def qrecvall(self, length):
+        data = b''
+        while len(data) < length:
+            more = self.csock.recv(length - len(data), socket.MSG_DONTWAIT)
             if not more:
                 logging.error('Did not receive all the expected bytes from server.')
                 break
