@@ -4,6 +4,7 @@ class ClientThread(threading.Thread):
 
     def __init__(self, address, socket):
         threading.Thread.__init__(self)
+        self.addr = address
         self.csock = socket
         logging.info('New connection added.')
 
@@ -21,7 +22,7 @@ class ClientThread(threading.Thread):
             self.csock.sendall(b'500 BAD REQUEST')
             logging.warning('Bad request from client.')
         self.csock.close()
-        logging.info('Disconnect client ' + self.role + '.')
+        logging.info('Disconnect client')
 
     
     def recvall(self, length):
