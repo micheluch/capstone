@@ -74,10 +74,10 @@ class ClientThread(threading.Thread):
         # Main loop of the Traffic Light simulation
         while True:
             if self.isGreen:
-                if (self.role is 'N') or (self.role is 'S'):
+                if (self.role == 'N') or (self.role == 'S'):
                     ClientThread.EChangeEvent.wait()
                     ClientThread.WChangeEvent.wait()
-                elif (self.role is 'E') or (self.role is 'W'):
+                elif (self.role == 'E') or (self.role == 'W'):
                     ClientThread.NChangeEvent.wait()
                     ClientThread.SChangeEvent.wait()
                 message = ("400 " + self.role + " R").encode('utf-8')
@@ -87,32 +87,32 @@ class ClientThread(threading.Thread):
                 logging.info('Received from ' + self.role + ': ' + message)
                 self.isGreen = False
                 
-                if self.role is 'N':
+                if self.role == 'N':
                     #set NChangeEvent
                     ClientThread.NChangeEvent.set()
-                if self.role is 'S':
+                if self.role == 'S':
                     #set SChangeEvent
                     ClientThread.SChangeEvent.set()
-                if self.role is 'E':
+                if self.role == 'E':
                     #set EChangeEvent
                     ClientThread.EChangeEvent.set()
-                if self.role is 'W':
+                if self.role == 'W':
                     #set WChangeEvent
                     ClientThread.WChangeEvent.set()
  
             else:
                 message = self.recvall(7).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
-                if self.role is 'N':
+                if self.role == 'N':
                     #set NChangeEvent
                     ClientThread.NChangeEvent.set()
-                if self.role is 'S':
+                if self.role == 'S':
                     #set SChangeEvent
                     ClientThread.SChangeEvent.set()
-                if self.role is 'E':
+                if self.role == 'E':
                     #set EChangeEvent
                     ClientThread.EChangeEvent.set()
-                if self.role is 'W':
+                if self.role == 'W':
                     #set WChangeEvent
                     ClientThread.WChangeEvent.set()
                 #wait on NChangeEvent
