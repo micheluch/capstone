@@ -24,6 +24,7 @@ class ClientThread(threading.Thread):
         
     def __init__(self, address, socket):
         threading.Thread.__init__(self)
+        self.addr = address
         self.csock = socket
         self.isGreen = False
         logging.info('New connection added.')
@@ -62,8 +63,44 @@ class ClientThread(threading.Thread):
                 self.role = 'W'
                 ClientThread.WisTaken = True
                 self.csock.sendall(b'140')
-            else: #Should never happen in normal run
+            else:
+                # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
+                self.role = ''
+#                working = True
+#                while working:
+#                    message = self.recvall(3).decode('utf-8')
+#                    if message.startswith("700"):
+#                        message = self.recvall(15).decode('utf-8')
+#                        NChangeEvent.set()
+#                        SChangeEvent.set()
+#                        EChangeEvent.set()
+#                        WChangeEvent.set()
+#                        working = False
+#                    else:
+#                        message = self.recvall(9).decode('utf-8')
+#                    logging.info("Sentinel sent " + message)
+#                sock.close()
+#                sys.exit()
+
+        if self.role == '':
+            working = True
+            while working:
+                message = self.recvall(3).decode('utf-8')
+                if message.startswith("700"):
+                    message = self.recvall(15).decode('utf-8')
+                    NChangeEvent.set()
+                    SChangeEvent.set()
+                    EChangeEvent.set()
+                    WChangeEvent.set()
+                    working = False
+                else:
+                    message = self.recvall(9).decode('utf-8')
+                logging.info("Sentinel sent " + message)
+            sock.close()
+            sys.exit()
+
+
 
         # Game on
         # Send 900: game start trigger
@@ -84,6 +121,12 @@ class ClientThread(threading.Thread):
                 self.csock.sendall(message)
                 logging.info('Sent to ' + self.role + ': 400 ' + self.role + ' R')
                 message = self.recvall(7).decode('utf-8')
+                if message.startswith('700'):
+                    #message += self.recvall(15).decode('utf-8')
+                    logging.error('Received fatal error from ' + self.role + ': ' + message)
+                    break
+                #else:
+                #    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
                 self.isGreen = False
                 
@@ -102,6 +145,11 @@ class ClientThread(threading.Thread):
  
             else:
                 message = self.recvall(7).decode('utf-8')
+                if message.startswith('700'):
+                    #message += self.recvall(15).decode('utf-8')
+                    logging.error('Received fatal error from ' + self.role + ': ' + message)
+                #else:
+                #    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
                 if self.role == 'N':
                     #set NChangeEvent
@@ -116,13 +164,13 @@ class ClientThread(threading.Thread):
                     #set WChangeEvent
                     ClientThread.WChangeEvent.set()
                 #wait on NChangeEvent
-                ClientThread.NChangeEvent.wait(5)
+                ClientThread.NChangeEvent.wait()
                 #wait on SChangeEvent
-                ClientThread.SChangeEvent.wait(5)
+                ClientThread.SChangeEvent.wait()
                 #wait on EChangeEvent
-                ClientThread.EChangeEvent.wait(5)
+                ClientThread.EChangeEvent.wait()
                 #wait on WChangeEvent
-                ClientThread.WChangeEvent.wait(5)
+                ClientThread.WChangeEvent.wait()
                 #clear all events
 
                 time.sleep(1) #Removing the sleep desynchronizes the system. Potential break for machine learning alrgorithm to catch
@@ -142,6 +190,16 @@ class ClientThread(threading.Thread):
         data = b''
         while len(data) < length:
             more = self.csock.recv(length - len(data))
+            if not more:
+                logging.error('Did not receive all the expected bytes from server.')
+                break
+            data += more
+        return data
+
+    def qrecvall(self, length):
+        data = b''
+        while len(data) < length:
+            more = self.csock.recv(length - len(data), socket.MSG_DONTWAIT)
             if not more:
                 logging.error('Did not receive all the expected bytes from server.')
                 break

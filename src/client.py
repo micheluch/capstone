@@ -29,9 +29,12 @@ def client(host, port, isAttacker, mode):
     turnRedMsg = "100"
     turnGreenMsg = "200"
     patienceValue = 1
+    latency = 0
     if (isAttacker):
         if mode == 1:
             patienceValue = 0
+        elif mode ==2:
+            latency = 0.1
         turnRedMsg = "105"
         turnGreenMsg = "205"
     logging.info('Connect to server: ' + host + ' on port: ' + str(port))
@@ -68,8 +71,20 @@ def client(host, port, isAttacker, mode):
         wGreen = False
         logging.info('Role is ' + clientRole)
     else:
-        logging.info('Received error: ' + message)
+        logging.info('Role is sentinel/observer: ' + message)
         clientRole = ''
+        while ( (nGreen or sGreen) != (eGreen or wGreen) ):
+            sendMessage = ('600').encode('utf-8')
+            sock.sendall(sendMessage)
+            logging.info("Sentinel: All\'s well")
+        nGreen = None
+        eGreen = None
+        sGreen = None
+        wGreen = None
+        sock.sendall('700 Error Detected'.encode('utf-8'))
+        logging.error('Sentinel sent: 700 Error Detected')
+        sock.close()
+        sys.exit()
 
     message = recvall(sock, 3).decode('utf-8')
     logging.info(clientRole + ' Received: ' + message)
@@ -103,17 +118,43 @@ def client(host, port, isAttacker, mode):
             logging.info(clientRole + ' Received: ' + message)
             if message.startswith("300"):
                 isGreen = True
-                if clientRole == 'N':
+                #if nGreen is None or sGreen is None or eGreen is None or wGren is None:
+                    #sendMessage = '705 Entering Error Mode'.encode('utf-8')
+                    #break
+                if clientRole == 'N' and nGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
+                elif clientRole == 'N':
                     nGreen = False
+                elif clientRole == 'S' and sGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
                 elif clientRole == 'S':
                     sGreen = False
+                elif clientRole == 'E' and eGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
                 elif clientRole == 'E':
                     eGreen = False
+                elif clientRole == 'W' and wGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
                 elif clientRole == 'W':
                     wGreen = False
 
-            else:
-                sys.exit(-1)
+            #else:
+                #sys.exit(-1)
+    
+    while True:
+        time.sleep(1)
+        if clientRole == 'N':
+            nGreen = False if (nGreen is None) else None
+        elif clientRole == 'S':
+            sGreen = False if (sGreen is None) else None
+        elif clientRole == 'E':
+            eGreen = False if (eGreen is None) else None
+        elif clientRole == 'W':
+            wGreen = False if (wGreen is None) else None
+
+
+        
+
 
 
 if __name__ == '__main__':
@@ -123,7 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('host', help='IP address of the server.')
     parser.add_argument('mode', type=int, help='Client attack mode. Enter 0 for normal operation.')
     args = parser.parse_args()
-    attacker = 4
+    attacker = 5
     if args.mode > 0:
         attacker = random.randint(0, 3)
 
