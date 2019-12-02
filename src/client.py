@@ -74,7 +74,8 @@ def client(host, port, isAttacker, mode):
         logging.info('Role is sentinel/observer: ' + message)
         clientRole = ''
         while ( (nGreen or sGreen) != (eGreen or wGreen) ):
-            sock.sendall('600 All Good'.encode('utf-8'))
+            sendMessage = ('600').encode('utf-8')
+            sock.sendall(sendMessage)
             logging.info("Sentinel: All\'s well")
         nGreen = None
         eGreen = None
