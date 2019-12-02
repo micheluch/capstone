@@ -80,15 +80,6 @@ def client(host, port, isAttacker, mode):
             logging.info(clientRole + ' Received: ' + message)
             if message.startswith("400"):
                 isGreen = False
-                if clientRole == 'N':
-                    nGreen = False
-                elif clientRole == 'S':
-                    sGreen = False
-                elif clientRole == 'E':
-                    eGreen = False
-                elif clientRole == 'W':
-                    wGreen = False
-
                 sendMessage = (turnRedMsg + " " + clientRole + " R").encode('utf-8')
                 sock.sendall(sendMessage)
                 logging.info(clientRole + ' Sent:' + sendMessage.decode('utf-8'))
@@ -103,15 +94,6 @@ def client(host, port, isAttacker, mode):
             logging.info(clientRole + ' Received: ' + message)
             if message.startswith("300"):
                 isGreen = True
-                if clientRole == 'N':
-                    nGreen = False
-                elif clientRole == 'S':
-                    sGreen = False
-                elif clientRole == 'E':
-                    eGreen = False
-                elif clientRole == 'W':
-                    wGreen = False
-
             else:
                 sys.exit(-1)
 
