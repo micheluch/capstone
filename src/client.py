@@ -120,12 +120,20 @@ def client(host, port, isAttacker, mode):
                 #if nGreen is None or sGreen is None or eGreen is None or wGren is None:
                     #sendMessage = '705 Entering Error Mode'.encode('utf-8')
                     #break
-                if clientRole == 'N':
+                if clientRole == 'N' and nGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
+                elif clientRole == 'N':
                     nGreen = False
+                elif clientRole == 'S' and sGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
                 elif clientRole == 'S':
                     sGreen = False
+                elif clientRole == 'E' and eGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
                 elif clientRole == 'E':
                     eGreen = False
+                elif clientRole == 'W' and wGreen is None:
+                    sock.sendall('700 a b'.encode('utf-8'))
                 elif clientRole == 'W':
                     wGreen = False
 

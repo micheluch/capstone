@@ -122,7 +122,7 @@ class ClientThread(threading.Thread):
                 logging.info('Sent to ' + self.role + ': 400 ' + self.role + ' R')
                 message = self.recvall(7).decode('utf-8')
                 if message.startswith('700'):
-                    message += self.recvall(15).decode('utf-8')
+                    #message += self.recvall(15).decode('utf-8')
                     logging.error('Received fatal error from ' + self.role + ': ' + message)
                     break
                 #else:
@@ -146,7 +146,7 @@ class ClientThread(threading.Thread):
             else:
                 message = self.recvall(7).decode('utf-8')
                 if message.startswith('700'):
-                    message += self.recvall(15).decode('utf-8')
+                    #message += self.recvall(15).decode('utf-8')
                     logging.error('Received fatal error from ' + self.role + ': ' + message)
                 #else:
                 #    message += self.recvall(4).decode('utf-8')
