@@ -73,7 +73,7 @@ def client(host, port, isAttacker, mode):
     else:
         logging.info('Role is sentinel/observer: ' + message)
         clientRole = ''
-        while ( (nGreen or sGreen) and not (eGreen or wGreen) ):
+        while ( (nGreen or sGreen) != (eGreen or wGreen) ):
             sock.sendall('600 All Good'.encode('utf-8'))
             logging.info("Sentinel: All\'s well")
         nGreen = None
@@ -117,10 +117,10 @@ def client(host, port, isAttacker, mode):
             logging.info(clientRole + ' Received: ' + message)
             if message.startswith("300"):
                 isGreen = True
-                if nGreen is None or sGreen is None or eGreen is None or wGren is None:
-                    sendMessage = '705 Entering Error Mode'.encode('utf-8')
-                    break
-                elif clientRole == 'N':
+                #if nGreen is None or sGreen is None or eGreen is None or wGren is None:
+                    #sendMessage = '705 Entering Error Mode'.encode('utf-8')
+                    #break
+                if clientRole == 'N':
                     nGreen = False
                 elif clientRole == 'S':
                     sGreen = False
@@ -129,8 +129,8 @@ def client(host, port, isAttacker, mode):
                 elif clientRole == 'W':
                     wGreen = False
 
-            else:
-                sys.exit(-1)
+            #else:
+                #sys.exit(-1)
     
     while True:
         time.sleep(1)
@@ -159,8 +159,8 @@ if __name__ == '__main__':
     if args.mode > 0:
         attacker = random.randint(0, 3)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers = 5) as executor:
-        for i in range(5):
+    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+        for i in range(4):
             if i == attacker:
                 isAttacker = True
             else:

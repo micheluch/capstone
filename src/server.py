@@ -66,21 +66,41 @@ class ClientThread(threading.Thread):
             else:
                 # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
-                working = True
-                while working:
-                    message = self.recvall(3).decode('utf-8')
-                    if message.startswith("700"):
-                        message = self.recvall(15).decode('utf-8')
-                        NChangeEvent.set()
-                        SChangeEvent.set()
-                        EChangeEvent.set()
-                        WChangeEvent.set()
-                        working = False
-                    else:
-                        message = self.recvall(9).decode('utf-8')
-                    logging.info("Sentinel sent " + message)
-                sock.close()
-                sys.exit()
+                self.role = ''
+#                working = True
+#                while working:
+#                    message = self.recvall(3).decode('utf-8')
+#                    if message.startswith("700"):
+#                        message = self.recvall(15).decode('utf-8')
+#                        NChangeEvent.set()
+#                        SChangeEvent.set()
+#                        EChangeEvent.set()
+#                        WChangeEvent.set()
+#                        working = False
+#                    else:
+#                        message = self.recvall(9).decode('utf-8')
+#                    logging.info("Sentinel sent " + message)
+#                sock.close()
+#                sys.exit()
+
+        if self.role == '':
+            working = True
+            while working:
+                message = self.recvall(3).decode('utf-8')
+                if message.startswith("700"):
+                    message = self.recvall(15).decode('utf-8')
+                    NChangeEvent.set()
+                    SChangeEvent.set()
+                    EChangeEvent.set()
+                    WChangeEvent.set()
+                    working = False
+                else:
+                    message = self.recvall(9).decode('utf-8')
+                logging.info("Sentinel sent " + message)
+            sock.close()
+            sys.exit()
+
+
 
         # Game on
         # Send 300: game start trigger
@@ -100,13 +120,13 @@ class ClientThread(threading.Thread):
                 message = ("400 " + self.role + " R").encode('utf-8')
                 self.csock.sendall(message)
                 logging.info('Sent to ' + self.role + ': 400 ' + self.role + ' R')
-                message = self.recvall(3).decode('utf-8')
+                message = self.recvall(7).decode('utf-8')
                 if message.startswith('700'):
                     message += self.recvall(15).decode('utf-8')
                     logging.error('Received fatal error from ' + self.role + ': ' + message)
                     break
-                else:
-                    message += self.recvall(4).decode('utf-8')
+                #else:
+                #    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
                 self.isGreen = False
                 
@@ -124,12 +144,12 @@ class ClientThread(threading.Thread):
                     ClientThread.WChangeEvent.set()
  
             else:
-                message = self.recvall(3).decode('utf-8')
+                message = self.recvall(7).decode('utf-8')
                 if message.startswith('700'):
                     message += self.recvall(15).decode('utf-8')
                     logging.error('Received fatal error from ' + self.role + ': ' + message)
-                else:
-                    message += self.recvall(4).decode('utf-8')
+                #else:
+                #    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
                 if self.role is 'N':
                     #set NChangeEvent
@@ -144,13 +164,13 @@ class ClientThread(threading.Thread):
                     #set WChangeEvent
                     ClientThread.WChangeEvent.set()
                 #wait on NChangeEvent
-                ClientThread.NChangeEvent.wait(5)
+                ClientThread.NChangeEvent.wait()
                 #wait on SChangeEvent
-                ClientThread.SChangeEvent.wait(5)
+                ClientThread.SChangeEvent.wait()
                 #wait on EChangeEvent
-                ClientThread.EChangeEvent.wait(5)
+                ClientThread.EChangeEvent.wait()
                 #wait on WChangeEvent
-                ClientThread.WChangeEvent.wait(5)
+                ClientThread.WChangeEvent.wait()
                 #clear all events
 
                 time.sleep(1) #Removing the sleep desynchronizes the system. Potential break for machine learning alrgorithm to catch
