@@ -16,6 +16,12 @@ class ClientThread(threading.Thread):
     SChangeEvent = threading.Event()
     EChangeEvent = threading.Event()
     WChangeEvent = threading.Event()
+    changeEvents = {
+            'N': NChangeEvent,
+            'S': SChangeEvent,
+            'E': EChangeEvent,
+            'W': WChangeEvent
+            }
 
     NisTaken = False
     EisTaken = False
