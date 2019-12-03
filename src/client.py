@@ -152,11 +152,6 @@ def client(host, port, isAttacker, mode):
         elif clientRole == 'W':
             wGreen = False if (wGreen is None) else None
 
-
-        
-
-
-
 if __name__ == '__main__':
     port = 9001
 
@@ -168,7 +163,7 @@ if __name__ == '__main__':
     if args.mode > 0:
         attacker = random.randint(0, 3)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+    with concurrent.futures.ThreadPoolExecutor(4) as executor:
         for i in range(4):
             if i == attacker:
                 isAttacker = True

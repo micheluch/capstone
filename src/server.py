@@ -50,19 +50,23 @@ class ClientThread(threading.Thread):
                 ClientThread.NisTaken = True
                 self.isGreen = True
                 self.csock.sendall(b'110')
+                ClientThread.NChangeEvent.set()
             elif not ClientThread.EisTaken:
                 self.role = 'E'
                 ClientThread.EisTaken = True
                 self.csock.sendall(b'120')
+                ClientThread.EChangeEvent.set()
             elif not ClientThread.SisTaken:
                 self.role = 'S'
                 ClientThread.SisTaken = True
                 self.isGreen = True
                 self.csock.sendall(b'130')
+                ClientThread.SChangeEvent.set()
             elif not ClientThread.WisTaken:
                 self.role = 'W'
                 ClientThread.WisTaken = True
                 self.csock.sendall(b'140')
+                ClientThread.WChangeEvent.set()
             else:
                 # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
@@ -89,10 +93,10 @@ class ClientThread(threading.Thread):
                 message = self.recvall(3).decode('utf-8')
                 if message.startswith("700"):
                     message = self.recvall(15).decode('utf-8')
-                    NChangeEvent.set()
-                    SChangeEvent.set()
-                    EChangeEvent.set()
-                    WChangeEvent.set()
+                    ClientThread.NChangeEvent.set()
+                    ClientThread.SChangeEvent.set()
+                    ClientThread.EChangeEvent.set()
+                    ClientThread.WChangeEvent.set()
                     working = False
                 else:
                     message = self.recvall(9).decode('utf-8')
@@ -105,6 +109,10 @@ class ClientThread(threading.Thread):
         # Game on
         # Send 900: game start trigger
         message = '900'.encode('utf-8')
+        ClientThread.NChangeEvent.wait()
+        ClientThread.EChangeEvent.wait()
+        ClientThread.SChangeEvent.wait()
+        ClientThread.WChangeEvent.wait()
         self.csock.sendall(message)
         logging.info('Sent: 900')
 
