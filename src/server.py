@@ -95,6 +95,7 @@ class ClientThread(threading.Thread):
         if self.role == -1:
             working = True
             while working:
+                time.sleep(1)
                 message = self.recvall(7).decode('utf-8')
                 if message.startswith("700"):
                     changeEvents['N'].set()
@@ -149,6 +150,7 @@ class ClientThread(threading.Thread):
                     message = ('800 ' + ClientThread.roles[self.role] + ' G').encode('utf-8')
                     self.csock.sendall(message)
                     logging.info('Sent to ' + ClientThread.roles[self.role] + ':800 ' + ClientThread.roles[self.role] + ' G')
+                    time.sleep(0.5)
 
                 ClientThread.changeEvents[ClientThread.roles[self.role]].set()
                 
