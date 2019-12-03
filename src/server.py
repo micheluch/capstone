@@ -144,6 +144,12 @@ class ClientThread(threading.Thread):
                 #    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + ClientThread.roles[self.role] + ': ' + message)
 
+                adjacent = (self.role + 1) % 2
+                while (ClientThread.changeEvents[ClientThread.roles[adjacent]].isSet() or ClientThread.changeEvents[ClientThread.roles[adjacent + 2]].isSet()):
+                    message = ('800 ' + ClientThread.roles[self.role] + ' G').encode('utf-8')
+                    self.csock.sendall(message)
+                    logging.info('Sent to ' + ClientThread.roles[self.role] + ':800 ' + ClientThread.roles[self.role] + ' G')
+
                 ClientThread.changeEvents[ClientThread.roles[self.role]].set()
                 
                 #wait on changeEvents['N']
