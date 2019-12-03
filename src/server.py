@@ -77,39 +77,7 @@ class ClientThread(threading.Thread):
                 self.csock.sendall(b'140')
                 ClientThread.WChangeEvent.set()
             else:
-                # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
-                self.role = -1
-#                working = True
-#                while working:
-#                    message = self.recvall(3).decode('utf-8')
-#                    if message.startswith("700"):
-#                        message = self.recvall(15).decode('utf-8')
-#                        NChangeEvent.set()
-#                        SChangeEvent.set()
-#                        EChangeEvent.set()
-#                        WChangeEvent.set()
-#                        working = False
-#                    else:
-#                        message = self.recvall(9).decode('utf-8')
-#                    logging.info("Sentinel sent " + message)
-#                sock.close()
-#                sys.exit()
-
-        if self.role == -1:
-            working = True
-            while working:
-                time.sleep(1)
-                message = self.recvall(7).decode('utf-8')
-                if message.startswith("700"):
-                    ClientThread.changeEvents['N'].set()
-                    ClientThread.changeEvents['S'].set()
-                    ClientThread.changeEvents['E'].set()
-                    ClientThread.changeEvents['W'].set()
-                    working = False
-                logging.info("Sentinel sent " + message)
-            self.csock.close()
-            sys.exit()
 
 
 

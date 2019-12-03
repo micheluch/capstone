@@ -74,24 +74,7 @@ def client(host, port, isAttacker, mode):
         wGreen = False
         logging.info('Role is ' + clientRole)
     else:
-        logging.info('Role is sentinel/observer: ' + message)
         clientRole = ''
-        time.sleep(0.5)
-        print("FUUUUUUUUUUUUUUUUUUUUUUUCCCCCKKKKKKKKKK!!!!!!!!!!!")
-        while ( not (nGreen or sGreen) or not (eGreen or wGreen) ):
-            print("I love WILLIES WILLIES WILLIES WILLIES WILLIES WILLIES")
-            sendMessage = ('600 a b').encode('utf-8')
-            sock.sendall(sendMessage)
-            logging.info("Sentinel: All\'s well")
-        print("I erased your condition...\n\t\tand leapt past it!")
-        nGreen = None
-        eGreen = None
-        sGreen = None
-        wGreen = None
-        sock.sendall('700 b a'.encode('utf-8'))
-        logging.error('Sentinel sent: 700 Error Detected')
-        sock.close()
-        sys.exit()
 
     message = recvall(sock, 3).decode('utf-8')
     logging.info(clientRole + ' Received: ' + message)
