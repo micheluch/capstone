@@ -1,4 +1,4 @@
-import argparse, socket, logging, threading
+import argparse, socket, logging, threading, sys
 import time
 
 # Comment out the line below to not print the INFO messages
@@ -59,19 +59,23 @@ class ClientThread(threading.Thread):
                 ClientThread.NisTaken = True
                 self.isGreen = True
                 self.csock.sendall(b'110')
+                ClientThread.NChangeEvent.set()
             elif not ClientThread.EisTaken:
                 self.role = 1
                 ClientThread.EisTaken = True
                 self.csock.sendall(b'120')
+                ClientThread.EChangeEvent.set()
             elif not ClientThread.SisTaken:
                 self.role = 2
                 ClientThread.SisTaken = True
                 self.isGreen = True
                 self.csock.sendall(b'130')
+                ClientThread.SChangeEvent.set()
             elif not ClientThread.WisTaken:
                 self.role = 3
                 ClientThread.WisTaken = True
                 self.csock.sendall(b'140')
+                ClientThread.WChangeEvent.set()
             else:
                 # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
@@ -98,20 +102,30 @@ class ClientThread(threading.Thread):
                 time.sleep(1)
                 message = self.recvall(7).decode('utf-8')
                 if message.startswith("700"):
-                    changeEvents['N'].set()
-                    changeEvents['S'].set()
-                    changeEvents['E'].set()
-                    changeEvents['W'].set()
+                    ClientThread.changeEvents['N'].set()
+                    ClientThread.changeEvents['S'].set()
+                    ClientThread.changeEvents['E'].set()
+                    ClientThread.changeEvents['W'].set()
                     working = False
                 logging.info("Sentinel sent " + message)
-            sock.close()
+            self.csock.close()
             sys.exit()
 
 
 
         # Game on
-        # Send 300: game start trigger
+        # Send 900: game start trigger
         message = '900'.encode('utf-8')
+        ClientThread.NChangeEvent.wait()
+        ClientThread.EChangeEvent.wait()
+        ClientThread.SChangeEvent.wait()
+        ClientThread.WChangeEvent.wait()
+
+        ClientThread.NChangeEvent.clear()
+        ClientThread.EChangeEvent.clear()
+        ClientThread.SChangeEvent.clear()
+        ClientThread.WChangeEvent.clear()
+
         self.csock.sendall(message)
         logging.info('Sent: 900')
 
