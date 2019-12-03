@@ -16,7 +16,7 @@ with open(csv_file_path + "PROCESSED " + csv_name, mode="w") as output_csv:
 
         # Modify the first row to have the custom Attack column
         first_row = next(input_file)
-        output_file.writerow(first_row + ['Attack?'])
+        output_file.writerow(['Attack?'] + first_row)
 
         # Process other rows
         for row in input_file:
@@ -24,7 +24,7 @@ with open(csv_file_path + "PROCESSED " + csv_name, mode="w") as output_csv:
             if tempRow[data_position].startswith('3030', 2): # Goal is to change this substring to '3035' for machine training purposes
                 changedData = tempRow[data_position][0:5] + '5' + tempRow[data_position][6:len(tempRow[data_position])]
                 tempRow[data_position] = changedData
-                output_file.writerow(tempRow + [1])
+                output_file.writerow([1] + tempRow)
             else:
-                output_file.writerow(tempRow + [0])
+                output_file.writerow([0] + tempRow)
 
