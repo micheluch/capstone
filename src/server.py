@@ -9,6 +9,7 @@ class ClientThread(threading.Thread):
     lightToChange = threading.Lock()
     changeMutex = threading.Lock()
     roleLock = threading.Lock()
+    clearLock = threading.Lock()
 
     changeLight = False
 
@@ -136,18 +137,7 @@ class ClientThread(threading.Thread):
                 logging.info('Received from ' + self.role + ': ' + message)
                 self.isGreen = False
                 
-                if self.role is 'N':
-                    #set changeEvents['N']
-                    ClientThread.changeEvents['N'].set()
-                if self.role is 'S':
-                    #set changeEvents['S']
-                    ClientThread.changeEvents['S'].set()
-                if self.role is 'E':
-                    #set changeEvents['E']
-                    ClientThread.changeEvents['E'].set()
-                if self.role is 'W':
-                    #set changeEvents['W']
-                    ClientThread.changeEvents['W'].set()
+                ClientThread.changeEvents[self.role].set()
  
             else:
                 message = self.recvall(7).decode('utf-8')
@@ -157,18 +147,9 @@ class ClientThread(threading.Thread):
                 #else:
                 #    message += self.recvall(4).decode('utf-8')
                 logging.info('Received from ' + self.role + ': ' + message)
-                if self.role is 'N':
-                    #set changeEvents['N']
-                    ClientThread.changeEvents['N'].set()
-                if self.role is 'S':
-                    #set changeEvents['S']
-                    ClientThread.changeEvents['S'].set()
-                if self.role is 'E':
-                    #set changeEvents['E']
-                    ClientThread.changeEvents['E'].set()
-                if self.role is 'W':
-                    #set changeEvents['W']
-                    ClientThread.changeEvents['W'].set()
+
+                ClientThread.changeEvents[self.role].set()
+                
                 #wait on changeEvents['N']
                 ClientThread.changeEvents['N'].wait()
                 #wait on changeEvents['S']
@@ -180,11 +161,7 @@ class ClientThread(threading.Thread):
                 #clear all events
 
                 time.sleep(1) #Removing the sleep desynchronizes the system. Potential break for machine learning alrgorithm to catch
-
-                ClientThread.changeEvents['N'].clear()
-                ClientThread.changeEvents['S'].clear()
-                ClientThread.changeEvents['E'].clear()
-                ClientThread.changeEvents['W'].clear()
+                self.clearEvents()
 
                 message = ("300 " + self.role + " G").encode('utf-8')
                 self.csock.sendall(message)
@@ -211,6 +188,14 @@ class ClientThread(threading.Thread):
                 break
             data += more
         return data
+
+    def clearEvents(self):
+        ClientThread.changeEvents['N'].clear()
+        ClientThread.changeEvents['S'].clear()
+        ClientThread.changeEvents['E'].clear()
+        ClientThread.changeEvents['W'].clear()
+
+                
 
 
 def server():
