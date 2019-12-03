@@ -1,4 +1,4 @@
-import argparse, socket, logging, concurrent.futures, sys, time
+import argparse, socket, logging, concurrent.futures, sys, time, threading
 import random
 
 # Comment out the line below to not print the INFO messages
@@ -9,6 +9,8 @@ nGreen = False
 sGreen = False
 eGreen = False
 wGreen = False
+
+flagLock = threading.Lock()
 
 def recvall(sock, length):
     data = b''
@@ -73,15 +75,19 @@ def client(host, port, isAttacker, mode):
     else:
         logging.info('Role is sentinel/observer: ' + message)
         clientRole = ''
-        while ( (nGreen or sGreen) != (eGreen or wGreen) ):
-            sendMessage = ('600').encode('utf-8')
+        time.sleep(0.5)
+        print("FUUUUUUUUUUUUUUUUUUUUUUUCCCCCKKKKKKKKKK!!!!!!!!!!!")
+        while ( not (nGreen or sGreen) or not (eGreen or wGreen) ):
+            print("I love WILLIES WILLIES WILLIES WILLIES WILLIES WILLIES")
+            sendMessage = ('600 a b').encode('utf-8')
             sock.sendall(sendMessage)
             logging.info("Sentinel: All\'s well")
+        print("I erased your condition...\n\t\tand leapt past it!")
         nGreen = None
         eGreen = None
         sGreen = None
         wGreen = None
-        sock.sendall('700 Error Detected'.encode('utf-8'))
+        sock.sendall('700 b a'.encode('utf-8'))
         logging.error('Sentinel sent: 700 Error Detected')
         sock.close()
         sys.exit()
@@ -116,6 +122,9 @@ def client(host, port, isAttacker, mode):
             logging.info(clientRole + ' Sent: ' + sendMessage.decode('utf-8'))
             message = recvall(sock, 7).decode('utf-8')
             logging.info(clientRole + ' Received: ' + message)
+            while message.startswith('800'):
+                message = recvall(sock, 7).decode('utf-8')
+                logging.info(clientRole + ' Received: ' + message)
             if message.startswith("300"):
                 isGreen = True
                 #if nGreen is None or sGreen is None or eGreen is None or wGren is None:

@@ -9,13 +9,22 @@ class ClientThread(threading.Thread):
     lightToChange = threading.Lock()
     changeMutex = threading.Lock()
     roleLock = threading.Lock()
+    clearLock = threading.Lock()
 
     changeLight = False
+
+    roles = ['N', 'E', 'S', 'W']
 
     NChangeEvent = threading.Event()
     SChangeEvent = threading.Event()
     EChangeEvent = threading.Event()
     WChangeEvent = threading.Event()
+    changeEvents = {
+            'N': NChangeEvent,
+            'S': SChangeEvent,
+            'E': EChangeEvent,
+            'W': WChangeEvent
+            }
 
     NisTaken = False
     EisTaken = False
@@ -46,31 +55,27 @@ class ClientThread(threading.Thread):
         # Assign traffic light
         with ClientThread.roleLock:
             if not ClientThread.NisTaken:
-                self.role = 'N'
+                self.role = 0
                 ClientThread.NisTaken = True
                 self.isGreen = True
                 self.csock.sendall(b'110')
-                ClientThread.NChangeEvent.set()
             elif not ClientThread.EisTaken:
-                self.role = 'E'
+                self.role = 1
                 ClientThread.EisTaken = True
                 self.csock.sendall(b'120')
-                ClientThread.EChangeEvent.set()
             elif not ClientThread.SisTaken:
-                self.role = 'S'
+                self.role = 2
                 ClientThread.SisTaken = True
                 self.isGreen = True
                 self.csock.sendall(b'130')
-                ClientThread.SChangeEvent.set()
             elif not ClientThread.WisTaken:
-                self.role = 'W'
+                self.role = 3
                 ClientThread.WisTaken = True
                 self.csock.sendall(b'140')
-                ClientThread.WChangeEvent.set()
             else:
                 # Client is now a sentinel/observer
                 self.csock.sendall(b'105')
-                self.role = ''
+                self.role = -1
 #                working = True
 #                while working:
 #                    message = self.recvall(3).decode('utf-8')
@@ -87,19 +92,17 @@ class ClientThread(threading.Thread):
 #                sock.close()
 #                sys.exit()
 
-        if self.role == '':
+        if self.role == -1:
             working = True
             while working:
-                message = self.recvall(3).decode('utf-8')
+                time.sleep(1)
+                message = self.recvall(7).decode('utf-8')
                 if message.startswith("700"):
-                    message = self.recvall(15).decode('utf-8')
-                    ClientThread.NChangeEvent.set()
-                    ClientThread.SChangeEvent.set()
-                    ClientThread.EChangeEvent.set()
-                    ClientThread.WChangeEvent.set()
+                    changeEvents['N'].set()
+                    changeEvents['S'].set()
+                    changeEvents['E'].set()
+                    changeEvents['W'].set()
                     working = False
-                else:
-                    message = self.recvall(9).decode('utf-8')
                 logging.info("Sentinel sent " + message)
             sock.close()
             sys.exit()
@@ -107,90 +110,65 @@ class ClientThread(threading.Thread):
 
 
         # Game on
-        # Send 900: game start trigger
+        # Send 300: game start trigger
         message = '900'.encode('utf-8')
-        ClientThread.NChangeEvent.wait()
-        ClientThread.EChangeEvent.wait()
-        ClientThread.SChangeEvent.wait()
-        ClientThread.WChangeEvent.wait()
         self.csock.sendall(message)
         logging.info('Sent: 900')
 
         # Main loop of the Traffic Light simulation
         while True:
             if self.isGreen:
-                if (self.role == 'N') or (self.role == 'S'):
-                    ClientThread.EChangeEvent.wait()
-                    ClientThread.WChangeEvent.wait()
-                elif (self.role == 'E') or (self.role == 'W'):
-                    ClientThread.NChangeEvent.wait()
-                    ClientThread.SChangeEvent.wait()
-                message = ("400 " + self.role + " R").encode('utf-8')
+                ClientThread.changeEvents[ ClientThread.roles[(self.role + 1) % 2] ].wait()
+                ClientThread.changeEvents[ ClientThread.roles[( (self.role + 1) % 2) + 2] ].wait()
+                message = ("400 " + ClientThread.roles[self.role] + " R").encode('utf-8')
+
                 self.csock.sendall(message)
-                logging.info('Sent to ' + self.role + ': 400 ' + self.role + ' R')
+                logging.info('Sent to ' + ClientThread.roles[self.role] + ': 400 ' + ClientThread.roles[self.role] + ' R')
                 message = self.recvall(7).decode('utf-8')
                 if message.startswith('700'):
                     #message += self.recvall(15).decode('utf-8')
-                    logging.error('Received fatal error from ' + self.role + ': ' + message)
+                    logging.error('Received fatal error from ' + ClientThread.roles[self.role] + ': ' + message)
                     break
                 #else:
                 #    message += self.recvall(4).decode('utf-8')
-                logging.info('Received from ' + self.role + ': ' + message)
+                logging.info('Received from ' + ClientThread.roles[self.role] + ': ' + message)
                 self.isGreen = False
                 
-                if self.role == 'N':
-                    #set NChangeEvent
-                    ClientThread.NChangeEvent.set()
-                if self.role == 'S':
-                    #set SChangeEvent
-                    ClientThread.SChangeEvent.set()
-                if self.role == 'E':
-                    #set EChangeEvent
-                    ClientThread.EChangeEvent.set()
-                if self.role == 'W':
-                    #set WChangeEvent
-                    ClientThread.WChangeEvent.set()
+                ClientThread.changeEvents[ClientThread.roles[self.role]].set()
  
             else:
                 message = self.recvall(7).decode('utf-8')
                 if message.startswith('700'):
                     #message += self.recvall(15).decode('utf-8')
-                    logging.error('Received fatal error from ' + self.role + ': ' + message)
+                    logging.error('Received fatal error from ' + ClientThread.roles[self.role] + ': ' + message)
                 #else:
                 #    message += self.recvall(4).decode('utf-8')
-                logging.info('Received from ' + self.role + ': ' + message)
-                if self.role == 'N':
-                    #set NChangeEvent
-                    ClientThread.NChangeEvent.set()
-                if self.role == 'S':
-                    #set SChangeEvent
-                    ClientThread.SChangeEvent.set()
-                if self.role == 'E':
-                    #set EChangeEvent
-                    ClientThread.EChangeEvent.set()
-                if self.role == 'W':
-                    #set WChangeEvent
-                    ClientThread.WChangeEvent.set()
-                #wait on NChangeEvent
-                ClientThread.NChangeEvent.wait()
-                #wait on SChangeEvent
-                ClientThread.SChangeEvent.wait()
-                #wait on EChangeEvent
-                ClientThread.EChangeEvent.wait()
-                #wait on WChangeEvent
-                ClientThread.WChangeEvent.wait()
+                logging.info('Received from ' + ClientThread.roles[self.role] + ': ' + message)
+
+                adjacent = (self.role + 1) % 2
+                while (ClientThread.changeEvents[ClientThread.roles[adjacent]].isSet() or ClientThread.changeEvents[ClientThread.roles[adjacent + 2]].isSet()):
+                    message = ('800 ' + ClientThread.roles[self.role] + ' G').encode('utf-8')
+                    self.csock.sendall(message)
+                    logging.info('Sent to ' + ClientThread.roles[self.role] + ':800 ' + ClientThread.roles[self.role] + ' G')
+                    time.sleep(0.5)
+
+                ClientThread.changeEvents[ClientThread.roles[self.role]].set()
+                
+                #wait on changeEvents['N']
+                ClientThread.changeEvents[ClientThread.roles[(self.role+1) % 4]].wait()
+                #wait on changeEvents['S']
+                ClientThread.changeEvents[ClientThread.roles[(self.role+2) % 4]].wait()
+                #wait on changeEvents['E']
+                ClientThread.changeEvents[ClientThread.roles[(self.role+3) % 4]].wait()
                 #clear all events
 
                 time.sleep(1) #Removing the sleep desynchronizes the system. Potential break for machine learning alrgorithm to catch
 
-                ClientThread.NChangeEvent.clear()
-                ClientThread.SChangeEvent.clear()
-                ClientThread.EChangeEvent.clear()
-                ClientThread.WChangeEvent.clear()
+                self.clearEvents()
 
-                message = ("300 " + self.role + " G").encode('utf-8')
+                message = ("300 " + ClientThread.roles[self.role] + " G").encode('utf-8')
                 self.csock.sendall(message)
-                logging.info('Sent to ' + self.role + ': 300 ' + self.role + ' G')
+                logging.info('Sent to ' + ClientThread.roles[self.role] + ': 300 ' + ClientThread.roles[self.role] + ' G')
                 self.isGreen = True
 
 
@@ -214,6 +192,14 @@ class ClientThread(threading.Thread):
             data += more
         return data
 
+    def clearEvents(self):
+        ClientThread.changeEvents['N'].clear()
+        ClientThread.changeEvents['S'].clear()
+        ClientThread.changeEvents['E'].clear()
+        ClientThread.changeEvents['W'].clear()
+
+                
+
 
 def server():
     # start serving (listening for clients)
@@ -234,4 +220,3 @@ def server():
 
 # Initiate the server
 server()
-
