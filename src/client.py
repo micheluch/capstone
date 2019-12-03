@@ -5,10 +5,6 @@ import random
 logging.basicConfig(level=logging.INFO)
 
 RED_DURATION = 10 #Variable to control the timer for red lights (in seconds)
-global nGreen = False
-global sGreen = False
-global eGreen = False
-global wGreen = False
 
 flagLock = threading.Lock()
 
@@ -25,6 +21,10 @@ def recvall(sock, length):
 
 def client(host, port, isAttacker, mode):
     # connect
+    global nGreen
+    global sGreen
+    global eGreen
+    global wGreen
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host ,port))
     isGreen = False
@@ -162,11 +162,6 @@ def client(host, port, isAttacker, mode):
         elif clientRole == 'W':
             wGreen = False if (wGreen is None) else None
 
-
-        
-
-
-
 if __name__ == '__main__':
     port = 9001
 
@@ -178,7 +173,7 @@ if __name__ == '__main__':
     if args.mode > 0:
         attacker = random.randint(0, 3)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+    with concurrent.futures.ThreadPoolExecutor(4) as executor:
         for i in range(4):
             if i == attacker:
                 isAttacker = True
