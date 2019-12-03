@@ -74,14 +74,14 @@ def client(host, port, isAttacker, mode):
         logging.info('Role is sentinel/observer: ' + message)
         clientRole = ''
         while ( (nGreen or sGreen) != (eGreen or wGreen) ):
-            sendMessage = ('600').encode('utf-8')
+            sendMessage = ('600 a b').encode('utf-8')
             sock.sendall(sendMessage)
             logging.info("Sentinel: All\'s well")
         nGreen = None
         eGreen = None
         sGreen = None
         wGreen = None
-        sock.sendall('700 Error Detected'.encode('utf-8'))
+        sock.sendall('700 a b'.encode('utf-8'))
         logging.error('Sentinel sent: 700 Error Detected')
         sock.close()
         sys.exit()
