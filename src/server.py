@@ -184,12 +184,17 @@ class ClientThread(threading.Thread):
 
 
 def server():
+
+    # get ip from args
+    parser = argparse.ArgumentParser(description='Basic Traffic Light Simulator')
+    parser.add_argument('host', help='IP address of the server.')
+    args = parser.parse_args()
+
     # start serving (listening for clients)
     port = 9001
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((socket.gethostname(), port))
-    print(socket.getfqdn())
+    sock.bind((args.host, port))
 
     while True:
         sock.listen(1)
