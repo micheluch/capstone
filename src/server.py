@@ -189,6 +189,7 @@ def server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((socket.gethostname(), port))
+    print(socket.getfqdn())
 
     while True:
         sock.listen(1)
