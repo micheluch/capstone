@@ -7,15 +7,16 @@ logging.basicConfig(level=logging.INFO)
 
 class BactMem():
     """ The Bacterial Memory Model implementation """
-    memory_file_name = 'memory_string.txt'
-    decision_file_name = 'decisions.txt'
+    memory_file_name = '../data/memory_string.txt'
+    decision_file_name = '../data/decisions.txt'
 
 
-    def __init__(self, mem_entry_len, update_mode):
+    def __init__(self, mem_entry_len, update_mode, decision_mode):
         self.memory = "" #the memory string
         self.decisions = {} # decision memory
         self.mem_entry_len = mem_entry_len
         self.update_mode = update_mode
+        self.decision_mode = decision_mode
         # load memory from file
         try:
             with open(BactMem.memory_file_name, 'r') as mf:
@@ -28,7 +29,10 @@ class BactMem():
             with open(BactMem.decision_file_name, 'r') as df:
                 for line in df:
                     vals = line.split()
-                    self.decisions[int(vals[0])] = [int(vals[1]), int(vals[2])]
+                    if len(vals) == 3:
+                        print(line)
+                        decision = Decision(int(vals[0]), int(vals[1]), int(vals[2]))
+                        self.add_decision(decision)
         except IOError:
             logging.error("The decision file does not exist.")
 
@@ -81,7 +85,8 @@ class BactMem():
         recent_memory = self.find_memory(self.memory)
         prev_decision = self.decisions.get(recent_memory)
         if recent_memory == -1 or prev_decision is None:
-            decision = Decision(len(self.memory) - 1, len(self.memory), random.randint(0, 1))
+            decision_value = 0 #decision_value = random.randint(0,1) if self.decision_mode == 0 else int(input())
+            decision = Decision(len(self.memory) - 1, len(self.memory), decision_value)
             logging.info(
                 "make_decision: New Decision is " + str(decision.decision)
                 + " at " + str(decision.substr_len) + " characters long")
@@ -101,7 +106,7 @@ class Decision():
     def __init__(self, index, length, decision):
         self._end_position = index
         self._substr_len = length
-        self._decision = decision
+        self._decision = decision # this is an integer
 
 
     @property
