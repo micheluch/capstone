@@ -84,13 +84,14 @@ class BactMem():
             decision = Decision(len(self.memory) - 1, len(self.memory), random.randint(0, 1))
             logging.info(
                 "make_decision: New Decision is " + str(decision.decision)
-                + " at " + str(decision.substr_len) + " long")
+                + " at " + str(decision.substr_len) + " characters long")
         else:
             decision = Decision(
                 len(self.memory) - 1, prev_decision.substr_len, prev_decision.decision)
             logging.info(
-                "make_decision: Matched Decision at " + str(prev_decision.end_position) + " is " + str(decision.decision)
-                + " at " + str(decision.substr_len) + " long")
+                "make_decision: Matched Decision at " + str(prev_decision.end_position)
+                + " is " + str(decision.decision)
+                + " at " + str(decision.substr_len) + " characters long")
         return decision
 
 

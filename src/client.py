@@ -151,15 +151,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Basic Traffic Light Simulator')
     parser.add_argument('host', help='IP address of the server.')
     parser.add_argument('mode', type=int, help='Client attack mode. Enter 0 for normal operation.')
+    parser.add_argument('num_attackers', type=int,
+                        help='The number of attackers in the client attack mode.')
     args = parser.parse_args()
-    attacker = 5
+    attackers = [False, False, False, False]
     if args.mode > 0:
-        attacker = random.randint(0, 3)
+        num_attackers = args.num_attackers if args.num_attackers < 5 else 4
+        attacker = -1
+        for i in range(args.num_attackers):
+            while attackers[attacker]:
+                attacker = random.randint(0, 3)
+            attackers[attacker] = True
 
     with concurrent.futures.ThreadPoolExecutor(4) as executor:
         for i in range(4):
-            if i == attacker:
-                isAttacker = True
-            else:
-                isAttacker = False
+            isAttacker = attackers[i]
             executor.submit(client, args.host, port, isAttacker, args.mode)
