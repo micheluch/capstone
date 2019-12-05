@@ -6,6 +6,6 @@ print("This Worked")
 my_memory = memory.BactMem(1, "classify-on-update")
 my_memory.update_memory("010")
 my_memory.update_memory("0")
-my_memory.update_memory("11")
+my_memory.update_memory("10")
+my_memory.update_memory("1")
 
-print('hello tom'.rfind('o'))

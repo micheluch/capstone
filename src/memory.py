@@ -58,7 +58,8 @@ class BactMem():
     def find_substr(self, search_string, offset):
         """ Find the last (rightmost) occurrence of the given string in self.memory. """
         offset *= self.mem_entry_len
-        return self.memory[:len(self.memory) - offset + 1].rfind(search_string[offset:], 0, len(self.memory) - offset)
+        print(offset)
+        return search_string.rfind(search_string[offset:], 0, len(search_string) - self.mem_entry_len)
 
 
     def find_memory(self, search_string):
@@ -67,9 +68,9 @@ class BactMem():
         offset = 1
         index = self.find_substr(search_string, offset)
         while index == -1 and offset < len(search_string) - 1:
+            logging.info(search_string[offset:] + " does not occur")
             offset += 1
             index = self.find_substr(search_string, offset)
-            logging.info(search_string[offset-1:] + " does not occur")
         print(index)
         return index, len(search_string) - offset * self.mem_entry_len
 
