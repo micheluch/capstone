@@ -46,38 +46,49 @@ class BactMem():
                 new_memory: a string containing the memory. The format is determined
                 (and enforced) by the client """
         self.memory += new_memory
+        logging.info("Memory is now " + self.memory)
+        logging.info("Memory length is now " + str(len(self.memory)))
         decision = -1
         if self.update_mode == "classify-on-update":
             decision = self.make_decision()
+        logging.info("New decision is " + str(decision.decision))
         return decision
+
 
     def find_substr(self, search_string, offset):
         """ Find the last (rightmost) occurrence of the given string in self.memory. """
         offset *= self.mem_entry_len
-        return self.memory.rfind(search_string[offset:], 0, len(self.memory)-offset)
+        return self.memory[:len(self.memory) - offset + 1].rfind(search_string[offset:], 0, len(self.memory) - offset)
+
 
     def find_memory(self, search_string):
         """ Finds the largest suffix of search_string that occurred previously in the memory.
         It will return the last occurrence. """
         offset = 1
         index = self.find_substr(search_string, offset)
-        while index == -1:
+        while index == -1 and offset < len(search_string) - 1:
             offset += 1
             index = self.find_substr(search_string, offset)
-        return index
+            logging.info(search_string[offset-1:] + " does not occur")
+        print(index)
+        return index, len(search_string) - offset * self.mem_entry_len
+
 
     def make_decision(self):
         """ A system to decide whether the current memory-state is 'bad'.
         Finds the most recent relevant memory and investigates the decision made
         at that time. If no memory was made, it makes a random choice and enters
         that as the decision. """
-        recent_memory = self.find_memory(self.memory)
-        if recent_memory == -1:
+        recent_memory, str_len = self.find_memory(self.memory)
+        prev_decision = self.decisions.get(recent_memory + str_len)
+        if recent_memory == -1 or prev_decision == None:
             decision = Decision(len(self.memory) - 1, len(self.memory), random.randint(0, 1))
         else:
-            prev_decision = self.decisions[recent_memory]
-            decision = Decision(len(self.memory) - 1, prev_decision.length, prev_decision.decision)
+            #prev_decision = self.decisions[recent_memory]
+            decision = Decision(len(self.memory) - 1, prev_decision.substr_len, prev_decision.decision)
+        logging.info("make_decision: New Decision is " + str(decision.decision) + " at " + str(decision.substr_len) + " long")
         return decision
+
 
 class Decision():
     """ A class to provide an organization for the decisions as a data structure. """
@@ -87,20 +98,24 @@ class Decision():
         self._substr_len = length
         self._decision = decision
 
+
     @property
     def end_position(self):
         """ Get the end position in memory where this decision occurred. """
         return self._end_position
+
 
     @property
     def substr_len(self):
         """ Get the length of the substring associated with this decision. """
         return self._substr_len
 
+
     @property
     def decision(self):
         """ Get the decision for this memory. """
         return self._decision
+
 
     def update(self, updated_decision):
         """ Updates the decision to the provided integer value. """
