@@ -46,33 +46,31 @@ class BactMem():
                 new_memory: a string containing the memory. The format is determined
                 (and enforced) by the client """
         self.memory += new_memory
-        logging.info("Memory is now " + self.memory)
-        logging.info("Memory length is now " + str(len(self.memory)))
         decision = -1
         if self.update_mode == "classify-on-update":
             decision = self.make_decision()
-        logging.info("New decision is " + str(decision.decision))
+            self.add_decision(decision)
         return decision
 
 
     def find_substr(self, search_string, offset):
         """ Find the last (rightmost) occurrence of the given string in self.memory. """
         offset *= self.mem_entry_len
-        print(offset)
-        return search_string.rfind(search_string[offset:], 0, len(search_string) - self.mem_entry_len)
+        return search_string.rfind(
+            search_string[offset:], 0, len(search_string) - self.mem_entry_len)
 
 
     def find_memory(self, search_string):
         """ Finds the largest suffix of search_string that occurred previously in the memory.
         It will return the last occurrence. """
+        logging.info("find_memory: Finding substring in %s", search_string)
         offset = 1
         index = self.find_substr(search_string, offset)
         while index == -1 and offset < len(search_string) - 1:
-            logging.info(search_string[offset:] + " does not occur")
+            #logging.info(search_string[offset:] + " does not occur")
             offset += 1
             index = self.find_substr(search_string, offset)
-        print(index)
-        return index, len(search_string) - offset * self.mem_entry_len
+        return index
 
 
     def make_decision(self):
@@ -80,14 +78,19 @@ class BactMem():
         Finds the most recent relevant memory and investigates the decision made
         at that time. If no memory was made, it makes a random choice and enters
         that as the decision. """
-        recent_memory, str_len = self.find_memory(self.memory)
-        prev_decision = self.decisions.get(recent_memory + str_len)
-        if recent_memory == -1 or prev_decision == None:
+        recent_memory = self.find_memory(self.memory)
+        prev_decision = self.decisions.get(recent_memory)
+        if recent_memory == -1 or prev_decision is None:
             decision = Decision(len(self.memory) - 1, len(self.memory), random.randint(0, 1))
+            logging.info(
+                "make_decision: New Decision is " + str(decision.decision)
+                + " at " + str(decision.substr_len) + " long")
         else:
-            #prev_decision = self.decisions[recent_memory]
-            decision = Decision(len(self.memory) - 1, prev_decision.substr_len, prev_decision.decision)
-        logging.info("make_decision: New Decision is " + str(decision.decision) + " at " + str(decision.substr_len) + " long")
+            decision = Decision(
+                len(self.memory) - 1, prev_decision.substr_len, prev_decision.decision)
+            logging.info(
+                "make_decision: Matched Decision at " + str(prev_decision.end_position) + " is " + str(decision.decision)
+                + " at " + str(decision.substr_len) + " long")
         return decision
 
 
