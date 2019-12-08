@@ -32,5 +32,3 @@ with open(csv_file_path + "PROCESSED " + csv_name, mode="w") as output_csv:
                 else:
                     tempRow[data_position] = int(tempRow[data_position], 16)
                 output_file.writerow([0] + tempRow)
-
-
