@@ -1,7 +1,7 @@
 import pyshark
 import subprocess, shlex, time, threading, queue
 
-input_command = shlex.split('sudo tcpdump -AUtttvvvXXnns1024 -i lo0 port 9001 -l')
+input_command = shlex.split('sudo tcpdump -AUtttvvvXXnns1024 -i wlp2s0 port 9001 -l')
 regex = shlex.split('egrep -o \"00:00:00.[0-9]+|val [0-9]+|ecr [0-9]+|length [0-9][0-9|3[0-9]30 3\w\w\w \w\w\w\w \w+|\w+.\w+.\w+.\w+.\w+ > \w+.\w+.\w+.\w+.\w+\"')
 #input_command = 'sudo tcpdump -l -AUtttvvvXXnns1024 -i lo0 port 9001 | egrep -o \"00:00:00.[0-9]+|val [0-9]+|ecr [' \
                 #'0-9]+|length [0-9][0-9|3[0-9]30 3\w\w\w \w\w\w\w \w+|\w+.\w+.\w+.\w+.\w+ > \w+.\w+.\w+.\w+.\w+\"'
