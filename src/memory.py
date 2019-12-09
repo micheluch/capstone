@@ -87,7 +87,7 @@ class BactMem():
         at that time. If no memory was made, it makes a random choice and enters
         that as the decision. """
         recent_memory, offset = self.find_memory(curr_memory)
-        prev_decision = self.decisions.get(recent_memory + len(curr_memory[offset:]))
+        prev_decision = self.decisions.get(recent_memory + len(curr_memory[offset:]) - self.mem_entry_len)
         logging.debug("make_decision: matched string %s", curr_memory[recent_memory:])
         if recent_memory == -1 or prev_decision is None:
             decision_value = 0 #decision_value = random.randint(0,1) if self.decision_mode == 0 else int(input())
