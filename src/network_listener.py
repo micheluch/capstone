@@ -15,13 +15,14 @@ def parse_packet(packet_list, change_codes):
     dest_port = ''
     length = ''
     payload = '0'
+    attack_bit = '0'
     for entry in packet_list:
         p = subprocess.Popen(regex, stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf-8')
         out = p.communicate(input=entry)[0]
         if out is not None:
             out = out.split('\n')
             # This block always starts with 127.0.0... ip and is always followed by val and ecr timestamps in order
-            if out[0].startswith('127'):
+            if out[0].startswith('127.') or out[0].startswith('10.') or out[0].startswith('192.'):
                 ip = out[0].split(' > ')
                 src = ip[0].split('.')
                 src_port = src[4]
@@ -48,7 +49,9 @@ def parse_packet(packet_list, change_codes):
             elif out[0].startswith('3'):
                 hex_payload = out[0].replace(' ', '')
                 if change_codes == 1:
-                    hex_payload = hex_payload[0:5] + '0' + hex_payload[6:len(hex_payload)]
+                    if hex_payload.startswith('5', 5):
+                        hex_payload = hex_payload[0:5] + '0' + hex_payload[6:len(hex_payload)]
+                        attack_bit = '1'
                 payload = int(hex_payload, 16)
 
         # If no payload block was found, make it 0. Payload block is always the last line
@@ -59,14 +62,18 @@ def parse_packet(packet_list, change_codes):
     if length == '' or delta_time == '' or src_port == '' or dest_port == '' or val_timestamp == '' or ecr_timestamp == '':
         return None
 
-    parsed_packet = [length, delta_time, src_port, dest_port, payload, val_timestamp, ecr_timestamp]
+    if change_codes == 0:
+        parsed_packet = [length, delta_time, src_port, dest_port, payload, val_timestamp, ecr_timestamp]
+    else:
+        parsed_packet = [attack_bit, length, delta_time, src_port, dest_port, payload, val_timestamp, ecr_timestamp]
+
     for i in parsed_packet:
         print(i)
     print("________________")
     return parsed_packet
 
 
-def main():
+def listen_on_network():
     # Main execution
     if sys.argv[1] == '0':
         change_codes = 0
@@ -101,4 +108,4 @@ def main():
 
 
 # Run the script
-main()
+listen_on_network()
