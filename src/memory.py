@@ -1,21 +1,22 @@
 """ A module to implement the Bacterial Memory model for a primitive machine learning algorithm. """
 import logging
-import random
+#import random
 
 #Comment out this line to turn off logging
 logging.basicConfig(level=logging.INFO)
 
 class BactMem():
     """ The Bacterial Memory Model implementation """
-    memory_file_name = 'memory_string.txt'
-    decision_file_name = 'decisions.txt'
+    memory_file_name = '../data/memory_string.txt'
+    decision_file_name = '../data/decisions.txt'
 
 
-    def __init__(self, mem_entry_len, update_mode):
+    def __init__(self, mem_entry_len, update_mode, decision_mode):
         self.memory = "" #the memory string
         self.decisions = {} # decision memory
         self.mem_entry_len = mem_entry_len
         self.update_mode = update_mode
+        self.decision_mode = decision_mode
         # load memory from file
         try:
             with open(BactMem.memory_file_name, 'r') as mf:
@@ -28,7 +29,10 @@ class BactMem():
             with open(BactMem.decision_file_name, 'r') as df:
                 for line in df:
                     vals = line.split()
-                    self.decisions[int(vals[0])] = [int(vals[1]), int(vals[2])]
+                    if len(vals) == 3:
+                        print(line + self.memory[int(vals[0])])
+                        decision = Decision(int(vals[0]), int(vals[1]), int(vals[2]))
+                        self.add_decision(decision)
         except IOError:
             logging.error("The decision file does not exist.")
 
@@ -48,7 +52,7 @@ class BactMem():
         self.memory += new_memory
         decision = -1
         if self.update_mode == "classify-on-update":
-            decision = self.make_decision()
+            decision = self.make_decision(self.memory)
             self.add_decision(decision)
         return decision
 
@@ -56,7 +60,7 @@ class BactMem():
     def find_substr(self, search_string, offset):
         """ Find the last (rightmost) occurrence of the given string in self.memory. """
         offset *= self.mem_entry_len
-        return search_string.rfind(
+        return self.memory.rfind(
             search_string[offset:], 0, len(search_string) - self.mem_entry_len)
 
 
@@ -70,18 +74,21 @@ class BactMem():
             #logging.info(search_string[offset:] + " does not occur")
             offset += 1
             index = self.find_substr(search_string, offset)
+            if self.decisions.get(index) is None:
+                index = -1
         return index
 
 
-    def make_decision(self):
+    def make_decision(self, curr_memory):
         """ A system to decide whether the current memory-state is 'bad'.
         Finds the most recent relevant memory and investigates the decision made
         at that time. If no memory was made, it makes a random choice and enters
         that as the decision. """
-        recent_memory = self.find_memory(self.memory)
+        recent_memory = self.find_memory(curr_memory)
         prev_decision = self.decisions.get(recent_memory)
         if recent_memory == -1 or prev_decision is None:
-            decision = Decision(len(self.memory) - 1, len(self.memory), random.randint(0, 1))
+            decision_value = 0 #decision_value = random.randint(0,1) if self.decision_mode == 0 else int(input())
+            decision = Decision(len(self.memory) - 1, len(self.memory), decision_value)
             logging.info(
                 "make_decision: New Decision is " + str(decision.decision)
                 + " at " + str(decision.substr_len) + " characters long")
@@ -101,7 +108,7 @@ class Decision():
     def __init__(self, index, length, decision):
         self._end_position = index
         self._substr_len = length
-        self._decision = decision
+        self._decision = decision # this is an integer
 
 
     @property
