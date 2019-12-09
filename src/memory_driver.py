@@ -8,7 +8,7 @@ try:
             clean_line = line.strip('\n')
             for i in range(0, len(clean_line)):
                 result = my_memory.update_memory(clean_line[i])
-                if result.decision == clean_line[i]:
+                if str(result.decision) == clean_line[i]:
                     print("!!!!!!!!!!!!!!!!!!!!!!Good bot!!!!!!!!!!!!!!!!!!! " + str(result.decision))
                 else:
                     print("Bad bot? " + str(result.decision))

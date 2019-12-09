@@ -70,7 +70,7 @@ class BactMem():
         logging.info("find_memory: Finding substring in %s", search_string)
         offset = 1
         index = self.find_substr(search_string, offset)
-        while index == -1 and offset < len(search_string) - 2:
+        while index == -1 and offset < len(search_string) - 1:
             #logging.info(search_string[offset:] + " does not occur")
             offset += 1
             index = self.find_substr(search_string, offset)
