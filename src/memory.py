@@ -1,6 +1,6 @@
 """ A module to implement the Bacterial Memory model for a primitive machine learning algorithm. """
 import logging
-import random
+#import random
 
 #Comment out this line to turn off logging
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +30,7 @@ class BactMem():
                 for line in df:
                     vals = line.split()
                     if len(vals) == 3:
-                        print(line)
+                        print(line + self.memory[int(vals[0])])
                         decision = Decision(int(vals[0]), int(vals[1]), int(vals[2]))
                         self.add_decision(decision)
         except IOError:
@@ -52,7 +52,7 @@ class BactMem():
         self.memory += new_memory
         decision = -1
         if self.update_mode == "classify-on-update":
-            decision = self.make_decision()
+            decision = self.make_decision(self.memory)
             self.add_decision(decision)
         return decision
 
@@ -60,7 +60,7 @@ class BactMem():
     def find_substr(self, search_string, offset):
         """ Find the last (rightmost) occurrence of the given string in self.memory. """
         offset *= self.mem_entry_len
-        return search_string.rfind(
+        return self.memory.rfind(
             search_string[offset:], 0, len(search_string) - self.mem_entry_len)
 
 
@@ -70,19 +70,21 @@ class BactMem():
         logging.info("find_memory: Finding substring in %s", search_string)
         offset = 1
         index = self.find_substr(search_string, offset)
-        while index == -1 and offset < len(search_string) - 1:
+        while index == -1 and offset < len(search_string) - 2:
             #logging.info(search_string[offset:] + " does not occur")
             offset += 1
             index = self.find_substr(search_string, offset)
+            if self.decisions.get(index) is None:
+                index = -1
         return index
 
 
-    def make_decision(self):
+    def make_decision(self, curr_memory):
         """ A system to decide whether the current memory-state is 'bad'.
         Finds the most recent relevant memory and investigates the decision made
         at that time. If no memory was made, it makes a random choice and enters
         that as the decision. """
-        recent_memory = self.find_memory(self.memory)
+        recent_memory = self.find_memory(curr_memory)
         prev_decision = self.decisions.get(recent_memory)
         if recent_memory == -1 or prev_decision is None:
             decision_value = 0 #decision_value = random.randint(0,1) if self.decision_mode == 0 else int(input())
